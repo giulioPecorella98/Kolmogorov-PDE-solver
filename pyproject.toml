@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "kolmogorov2D-solver"
 version = "2026.6.9"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
     "numpy"
 ]
