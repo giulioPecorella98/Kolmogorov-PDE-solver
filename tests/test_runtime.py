@@ -6,7 +6,7 @@ def make_solver(grid, boundary, coeffs, rhs):
     solver.initialize(0.5, 0.1)
     solver.compute_boundary_conditions(boundary)
     solver.compute_right_hand_side(rhs)
-    solver.solve()
+    solver.solve(verbose=False)
     return solver
 
 good_grid = (3, 3, 1)
@@ -47,14 +47,14 @@ class TestKolmogorovInput(unittest.TestCase):
     def test_solve_first(self):
         good_kolmogorov = ExplicitSolver(good_grid, good_coefficients)
         with self.assertRaises(RuntimeError):
-            good_kolmogorov.solve()
+            good_kolmogorov.solve(verbose=False)
 
     def test_solve_no_rhs(self):
         good_kolmogorov = ExplicitSolver(good_grid, good_coefficients)
         with self.assertRaises(RuntimeError):
             good_kolmogorov.initialize(0.5)
             good_kolmogorov.compute_boundary_conditions((0, 0, 0, 0, 0))
-            good_kolmogorov.solve()
+            good_kolmogorov.solve(verbose=False)
 
     def test_no_recomputing_rhs(self):
         good_kolmogorov = ExplicitSolver(good_grid, good_coefficients)
@@ -64,7 +64,7 @@ class TestKolmogorovInput(unittest.TestCase):
             good_kolmogorov.compute_right_hand_side(0)
             good_kolmogorov.initialize(0.3)
             good_kolmogorov.compute_boundary_conditions((0, 0, 0, 0, 0))
-            good_kolmogorov.solve()
+            good_kolmogorov.solve(verbose=False)
 
     def test_no_recomputing_boundary(self):
         good_kolmogorov = ExplicitSolver(good_grid, good_coefficients)
@@ -74,4 +74,4 @@ class TestKolmogorovInput(unittest.TestCase):
             good_kolmogorov.compute_right_hand_side(0)
             good_kolmogorov.initialize(0.3)
             good_kolmogorov.compute_right_hand_side(0)
-            good_kolmogorov.solve()
+            good_kolmogorov.solve(verbose=False)

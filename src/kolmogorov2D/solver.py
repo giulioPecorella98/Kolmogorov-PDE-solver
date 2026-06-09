@@ -296,11 +296,17 @@ class ExplicitSolver:
             raise ValueError("Right-hand side must be a scalar or a function.")
             
 
-    def solve(self) -> None:
+    def solve(self, verbose: bool = True) -> None:
         """ 
         Solves the PDE using a subRiemannian finite difference method, relying
         on the first order approximation of the Lie derivative x p_y - p_t
         
+        Parameters
+        ---------
+        verbose: bool, optional
+            Set to false if you don't want to print the simulation percentage
+
+
         Raises
         ------
         RuntimeError
@@ -317,9 +323,9 @@ class ExplicitSolver:
             raise RuntimeError("Please compute again the boundary conditions.")
         if self.rhs.shape != (self.Nt, self.Nx, self.Ny):
             raise RuntimeError("Please compute again the right-hand side.")
-        
-        percentages = 0  
-        print(f"Computing solution: {percentages}%", end="")
+        if verbose:
+            percentages = 0  
+            print(f"Computing solution: {percentages}%", end="")
         for n in range(self.Nt - 1):
             for i in range(1, self.Nx - 1):
                 jmin = max(0, self.Lx - i) * (n + 1)
@@ -336,10 +342,12 @@ class ExplicitSolver:
                     self.solution[n + 1, i, j] = (self.solution[n, i, Lie] +
                                                  self.dt * (diffusion + drift +
                                                  reaction - self.rhs[n, i, j]))
-            if int((n + 1) / self.Nt * 100) > percentages:
-                percentages = int((n + 1) / self.Nt * 100)
-                print(f"\rComputing solution: {percentages}%", end="")
-        print("\r" + " " * 40, end="") 
-        print("\rSolution computed.")        
+            if verbose:
+                if int((n + 1) / self.Nt * 100) > percentages:
+                    percentages = int((n + 1) / self.Nt * 100)
+                    print(f"\rComputing solution: {percentages}%", end="")
+        if verbose:
+            print("\r" + " " * 40, end="") 
+            print("\rSolution computed.")        
         self.computed_solution = True
         return 

@@ -7,7 +7,7 @@ def make_solver(grid, boundary, coeffs, rhs):
     solver.initialize(0.5, 0.1)
     solver.compute_boundary_conditions(boundary)
     solver.compute_right_hand_side(rhs)
-    solver.solve()
+    solver.solve(verbose=False)
     return solver
 
 class TestKolmogorovSolution(unittest.TestCase):
