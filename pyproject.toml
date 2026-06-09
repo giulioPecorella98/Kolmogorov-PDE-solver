@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kolmogorov2D-solver"
+version = "2026.6.9"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy"
+]
+authors = [{name = "Giulio Pecorella", email = "giuliopecorella98@gmail.com"}]
+maintainers = [{name = "Giulio Pecorella", 
+                email = "giuliopecorella98@gmail.com"}]
+description = "A class to solve 2D PDE of degenerate Kolmogorov type."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+keywords = ["PDE", "solver", "numerical"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3"
+]
+
+[project.urls]
+Repository = "https://github.com/giulioPecorella98/Kolmogorov-PDE-solver"

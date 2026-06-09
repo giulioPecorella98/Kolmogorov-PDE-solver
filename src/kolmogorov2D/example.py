@@ -1,5 +1,5 @@
-from kolmogorov2D import ExplicitSolver
-from visualization import plot_solution
+from .solver import ExplicitSolver
+from .visualization import plot_solution
 import numpy as np
 
 if __name__ == "__main__":

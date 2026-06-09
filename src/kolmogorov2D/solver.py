@@ -24,8 +24,8 @@ Boundary2D
 """
 
 import numpy as np
-from finite_difference import second_order_difference as sd
-from finite_difference import central_difference as cd
+from .finite_difference import second_order_difference as sd
+from .finite_difference import central_difference as cd
 from typing import TypeAlias, Callable
 
 Function3D: TypeAlias = float | Callable[[float, float, float], float]
