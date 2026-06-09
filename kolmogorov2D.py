@@ -62,7 +62,12 @@ class ExplicitSolver:
              after compute_boundary_conditions and compute_right_hand_side)
     -------
     initialize(dx, dt = 0.1)
-        Computes the grid, the coefficients and check the stability condition
+        Computes the grid, the coefficients and check the stability condition.
+        \\If you call this method again (for instance to refine the grid), you
+        need to call again compute_boundary_conditions() and 
+        compute_right_hand_side()
+
+
     compute_boundary_conditions(boundary)
         Computes boundary conditions and initial condition
     compute_right_hand_side(rhs)
@@ -88,7 +93,7 @@ class ExplicitSolver:
             -If the input dimensions are invalid\\
             -If one of the coefficients is not a scalar or a function 
              that can be evaluated\\
-            -If one of the grid values is not a float
+            -If one of the grid values is not a float nor positive
         """
 
         if (len(grid) != 3) or (len(coefficients) != 3):
@@ -101,6 +106,8 @@ class ExplicitSolver:
             if not (isinstance(grid[i], (int, float))):
                 raise ValueError("Invalid grid value provided. Grid value " \
                                  "must be float or int.")
+            if grid[i] < 0:
+                raise ValueError("Invalid grid value, lenght must be positive")
         self.grid = grid
         self.coefficients = coefficients
         self.stability_check = 0
@@ -142,8 +149,8 @@ class ExplicitSolver:
         """
         if not isinstance(dx,(int, float)) or not isinstance(dt,(int, float)):
             raise TypeError("dx and dt must be numeric.")
-        if dx <= 0 or dt <= 0:
-            raise ValueError("dx and dt must be positive.")
+        if dx <= 0 or dx > self.grid[1] or dt <= 0 or dt > self.grid[0]:
+            raise ValueError("dx and dt must be valid for the grid.")
         self.dx = dx
         self.dt = dt
         t = self.grid[0]
