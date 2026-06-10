@@ -1,18 +1,21 @@
 # Kolmogorov 2D PDE Solver
 
-A Python library for solving **degenerate 2D Kolmogorov-type PDEs** using explicit finite difference schemes.
+A Python library for solving **degenerate 2D Kolmogorov-type PDEs** using 
+finite difference schemes.
 
 ## Overview
 
 This package provides numerical solvers for linear parabolic PDEs of the form:
 
 <p align="center">
-  <img src="docs/equation.png" alt="Kolmogorov PDE">
+  <img src="docs/operator.png" alt="Kolmogorov PDE">
 </p>
 
 on the domain **(0,T) × (-X,X) × (-Y,Y)**.
 
-The numerical scheme implements a specialized finite difference method adapted to the geometric structure of the Lie derivative, providing accurate approximations of the derivative:
+The numerical scheme implements a specialized finite difference method adapted 
+to the geometric structure of the Lie derivative, providing accurate 
+approximations of the derivative:
 
 <p align="center">
   <img src="docs/directional_derivative.png" alt="Lie Derivative">
@@ -24,10 +27,13 @@ using the approximation:
   <img src="docs/Lie_approximation.png" alt="Lie Approximation Scheme">
 </p>
 
+For more details about the approximation method and the boundary conditions 
+please refer to [https://link.springer.com/article/10.1007/BF02575835] .
+
 ## Features
 
-- Explicit finite difference solver for 2D Kolmogorov equations
-- Boundary conditions and initial conditions
+- Explicit method for 2D Kolmogorov equations
+- Implicit method (to be implemented) for 2D Kolmogorov equations
 - NumPy-based for efficient numerical computation
 - Pure Python implementation with minimal dependencies
 
@@ -50,35 +56,43 @@ pip install -e .
 **Requirements:**
 - Python ≥ 3.11
 - NumPy
+- Matplotlib (for data visualization only)
 
-## Quick Start
+## Quick example
 
 ```python
 from kolmogorov2D.solver import ExplicitSolver
 import numpy as np
 
 # Define domain: (0, T) × (-X, X) × (-Y, Y)
-domain = [1.0, 1.0, 1.0]  # T=1, X=1, Y=1
-
-# Create solver instance
-solver = ExplicitSolver(domain)
+domain = (1.0, 1.0, 1.0)  # T=1, X=1, Y=1
 
 # Define PDE coefficients a(t,x,y), b(t,x,y), c(t,x,y)
-coefficients = (0.1, 0.0, -1.0)  # constants
+coefficients = (1, 0, 0)  #c onstant coefficients
 
-# Define boundary and initial conditions
-# (left, right, bottom, top, initial)
+# Create solver instance
+solver = ExplicitSolver(domain, coefficients)
+
+# Initialize grid
+solver.initialize(0.5, 0.1)   #dx=0.5, dt=0.1 
+
+# Define and compute boundary and initial conditions
 boundary_conditions = (0.0, 0.0, 0.0, 0.0, lambda x, y: np.exp(-(x**2 + y**2)))
+solver.compute_boundary_conditions(boundary)
+
+# Define and compute right-hand side
+rhs = 0 
+solver.compute_right_hand_side(rhs)
 
 # Solve the PDE
-solution = solver.solve(coefficients, boundary_conditions)
+solution = solver.solve()
 ```
 
 ## Package Structure
 
 ```
 kolmogorov2D/
-├── solver.py              # Main ExplicitSolver class
+├── solver.py              # Solver class
 ├── finite_difference.py   # Finite difference operators
 ├── visualization.py       # Plotting utilities
 ├── example.py             # Example usage and demonstrations
@@ -89,26 +103,16 @@ kolmogorov2D/
 
 ### `solver.py`
 
-Contains the main `ExplicitSolver` class for solving the equation with an explicit scheme:
+Contains the main `ExplicitSolver` class for solving the equation with an 
+explicit scheme:
 
 ### `finite_difference.py`
 
-Implements discrete approximations for derivatives:
-- `second_order_difference()` - Second-order spatial differences
-- `central_difference()` - Central difference approximations
+Implements finite difference approximations for derivatives
 
 ### `visualization.py`
 
 Utilities for visualizing numerical solutions using Matplotlib.
-
-## Mathematical Background
-
-The solver handles PDEs of degenerate Kolmogorov type, characterized by:
-- A parabolic structure with a drift term (-x·u_y)
-- Variable coefficients for diffusion, advection, and reaction terms
-- Initial and boundary value problem on rectangular domains
-
-The explicit scheme adapts to the geometry of the Lie derivative, ensuring accuracy for this class of problems.
 
 ## Testing
 
@@ -120,7 +124,7 @@ pytest tests/
 
 **Test files:**
 - `tests/test_solution.py` - Solution correctness tests
-- `tests/test_runtime.py`  - Verify correctness of runtime
+- `tests/test_runtime.py`  - Runtime correctness
 - `tests/test_inputs.py`   - Input validation tests
 
 ## License
@@ -151,8 +155,3 @@ If you use this solver in your research, please cite:
   url={https://github.com/giulioPecorella98/Kolmogorov-PDE-solver}
 }
 ```
-
-## References
-
-- Finite Difference Methods for PDEs
-- Degenerate Parabolic Equations and Kinetic Theory
