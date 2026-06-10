@@ -8,7 +8,7 @@ finite difference schemes.
 This package provides numerical solvers for linear parabolic PDEs of the form:
 
 <p align="center">
-  <img src="docs/operator.png" alt="Kolmogorov PDE">
+  <img src="https://raw.githubusercontent.com/giulioPecorella98/Kolmogorov-PDE-solver/main/docs/operator.png" alt="Kolmogorov PDE">
 </p>
 
 on the domain **(0,T) × (-X,X) × (-Y,Y)**.
@@ -18,13 +18,13 @@ to the geometric structure of the Lie derivative, providing accurate
 approximations of the derivative:
 
 <p align="center">
-  <img src="docs/directional_derivative.png" alt="Lie Derivative">
+  <img src="https://raw.githubusercontent.com/giulioPecorella98/Kolmogorov-PDE-solver/main/docs/directional_derivative.png" alt="Lie Derivative">
 </p>
 
 using the approximation:
 
 <p align="center">
-  <img src="docs/Lie_approximation.png" alt="Lie Approximation Scheme">
+  <img src="https://raw.githubusercontent.com/giulioPecorella98/Kolmogorov-PDE-solver/main/docs/Lie_approximation.png" alt="Lie Approximation Scheme">
 </p>
 
 For more details about the approximation method and the boundary conditions 

@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from src.kolmogorov2D.solver import ExplicitSolver   
+from src.kolmogorov2d.solver import ExplicitSolver   
 
 def make_solver(grid, boundary, coeffs, rhs):
     solver = ExplicitSolver(grid, coeffs)
