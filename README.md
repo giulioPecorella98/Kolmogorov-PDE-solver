@@ -49,7 +49,10 @@ pip install kolmogorov2D-solver
 
 ```bash
 git clone https://github.com/giulioPecorella98/Kolmogorov-PDE-solver.git
-cd Kolmogorov-PDE-solver
+cd ~/Documents/Kolmogorov-PDE-solver
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -e .
 ```
 
@@ -61,7 +64,7 @@ pip install -e .
 ## Quick example
 
 ```python
-from kolmogorov2D.solver import ExplicitSolver
+from kolmogorov2d.solver import ExplicitSolver
 import numpy as np
 
 # Define domain: (0, T) × (-X, X) × (-Y, Y)
@@ -91,7 +94,7 @@ solution = solver.solve()
 ## Package Structure
 
 ```
-kolmogorov2D/
+kolmogorov2d/
 ├── solver.py              # Solver class
 ├── finite_difference.py   # Finite difference operators
 ├── visualization.py       # Plotting utilities

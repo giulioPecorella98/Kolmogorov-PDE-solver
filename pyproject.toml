@@ -21,6 +21,9 @@ classifiers = [
   "Programming Language :: Python :: 3"
 ]
 
+[project.optional-dependencies]
+viz = ["matplotlib"]
+
 [project.urls]
 Repository = "https://github.com/giulioPecorella98/Kolmogorov-PDE-solver"
 
