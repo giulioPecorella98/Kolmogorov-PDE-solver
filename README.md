@@ -77,7 +77,7 @@ solver = ExplicitSolver(domain, coefficients)
 solver.initialize(0.5, 0.1)   #dx=0.5, dt=0.1 
 
 # Define and compute boundary and initial conditions
-boundary_conditions = (0.0, 0.0, 0.0, 0.0, lambda x, y: np.exp(-(x**2 + y**2)))
+boundary = (0.0, 0.0, 0.0, 0.0, lambda x, y: np.exp(-(x**2 + y**2)))
 solver.compute_boundary_conditions(boundary)
 
 # Define and compute right-hand side
@@ -129,7 +129,8 @@ pytest tests/
 
 ## License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
+file for details.
 
 ## Contributing
 
