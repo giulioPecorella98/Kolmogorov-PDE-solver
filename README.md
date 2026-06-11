@@ -69,7 +69,7 @@ from kolmogorov2d.visualization import plot_solution
 import numpy as np
 
 # Define domain: (0, T) × (-X, X) × (-Y, Y)
-domain = (1.0, 1.0, 1.0)  # T=1, X=1, Y=1
+domain = (1.0, 5.0, 5.0)  # T=1, X=1, Y=1
 
 # Define PDE coefficients a(t,x,y), b(t,x,y), c(t,x,y)
 coefficients = (1, 0, 0)  #constant coefficients
@@ -94,7 +94,7 @@ solution = solver.return_solution()
 
 # Plot the solution
 T, X, Y = solver.return_grid()
-plot_solution(T, X, T, solution)
+plot_solution(T, X, Y, solution)
 ```
 
 ## Package Structure
