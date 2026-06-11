@@ -1,9 +1,9 @@
-from .solver import ExplicitSolver
-from .visualization import plot_solution
+from src.kolmogorov2d.solver import ExplicitSolver
+from src.kolmogorov2d.visualization import plot_solution
 import numpy as np
 
 if __name__ == "__main__":
-    grid = (5, 5, 3)
+    grid = (1, 50, 50)
     boundary = (0, 0, 0, 0, lambda x, y: np.exp(-1 * (x**2 + y**2)))
     coefficients = (1, 0, 0)
     right_hand_side = 0
@@ -15,5 +15,5 @@ if __name__ == "__main__":
     solution = kolmogorov.return_solution()
     T, X, Y = kolmogorov.return_grid()
     plot_solution(T, X, Y, solution)
-    input("Test completed.")
+    input("Example completed.")
 

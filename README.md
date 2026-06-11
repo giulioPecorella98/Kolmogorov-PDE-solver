@@ -39,17 +39,17 @@ please refer to [https://link.springer.com/article/10.1007/BF02575835] .
 
 ## Installation
 
-### From PyPI (when available)
+### From PyPI (soon available)
 
 ```bash
-pip install kolmogorov2D-solver
+pip install kolmogorov2d
 ```
 
 ### From source
 
 ```bash
 git clone https://github.com/giulioPecorella98/Kolmogorov-PDE-solver.git
-cd ~/Documents/Kolmogorov-PDE-solver
+cd Kolmogorov-PDE-solver
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
@@ -71,7 +71,7 @@ import numpy as np
 domain = (1.0, 1.0, 1.0)  # T=1, X=1, Y=1
 
 # Define PDE coefficients a(t,x,y), b(t,x,y), c(t,x,y)
-coefficients = (1, 0, 0)  #c onstant coefficients
+coefficients = (1, 0, 0)  #constant coefficients
 
 # Create solver instance
 solver = ExplicitSolver(domain, coefficients)
@@ -88,7 +88,7 @@ rhs = 0
 solver.compute_right_hand_side(rhs)
 
 # Solve the PDE
-solution = solver.solve()
+solution = solver.solve().return_solution()
 ```
 
 ## Package Structure
@@ -98,7 +98,6 @@ kolmogorov2d/
 ├── solver.py              # Solver class
 ├── finite_difference.py   # Finite difference operators
 ├── visualization.py       # Plotting utilities
-├── example.py             # Example usage and demonstrations
 └── __init__.py            # Package initialization
 ```
 
@@ -116,19 +115,6 @@ Implements finite difference approximations for derivatives
 ### `visualization.py`
 
 Utilities for visualizing numerical solutions using Matplotlib.
-
-## Testing
-
-Run the test suite to verify installation and functionality:
-
-```bash
-pytest tests/
-```
-
-**Test files:**
-- `tests/test_solution.py` - Solution correctness tests
-- `tests/test_runtime.py`  - Runtime correctness
-- `tests/test_inputs.py`   - Input validation tests
 
 ## License
 

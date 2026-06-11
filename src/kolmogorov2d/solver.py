@@ -195,12 +195,12 @@ class Solver:
         else:
             raise ValueError("Right-hand side must be a scalar or a function.")
         
-    def return_solution(self) -> np.typing.NDArray:
+    def return_solution(self) -> np._typing.NDArray:
         """Return the vector of the solution"""
         return self._solution.copy()
-    
-    def return_grid(self) -> tuple[np.typing.NDArray, np.typing.NDArray,
-                                   np.typing.NDArray]:
+
+    def return_grid(self) -> tuple[np._typing.NDArray, np._typing.NDArray,
+                                   np._typing.NDArray]:
         """Return the meshgrid T, X, Y"""
         return self._T.copy(), self._X.copy(), self._Y.copy()
 
