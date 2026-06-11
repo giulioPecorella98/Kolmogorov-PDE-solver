@@ -1,10 +1,10 @@
 """
-Finite-difference solver for two-dimensional Kolmogorov equations
+Finite difference solver for two dimensional Kolmogorov equations
 
 u_t - x u_y = a(t, x, y) u_xx + b(t, x, y) u_x + c(t, x, y) u - f(t, x, y)
 
-on the domain (0,T) x (-X,X) x (-Y,Y). The solver uses an explicit scheme 
-adapted  to the geometric structure of the Lie derivative u_t - x u_y
+on the domain (0,T) x (-X,X) x (-Y,Y). The solver uses a scheme 
+adapted to the geometric structure of the Lie derivative u_t - x u_y
 
 Type Aliases
 ------------
@@ -36,10 +36,10 @@ Boundary2D: TypeAlias = tuple[BoundaryFunction, BoundaryFunction,
 
 
 
-class ExplicitSolver:
+class Solver:    
     """
-    Numerical solver for a 2D Kolmogorov PDE on an origin-centered 
-    rectangular domain using an explicit finite difference scheme.
+    Skeleton class for explicit and implicit 2D Kolmogorov PDE solver on an 
+    origin-centered rectangular domain
     ...
 
     Attributes
@@ -53,27 +53,15 @@ class ExplicitSolver:
     coefficients : Coefficients3D
         a sequence of three scalars or functions representing 
         the coefficients of the PDE
-    rhs : Function3D
-        a scalar or function representing the right-hand side of the PDE
-    solution : np.ndarray
-        a 3D array representing the solution of the PDE
 
-    Methods (first call initialize to set the grid, and call solve only 
-             after compute_boundary_conditions and compute_right_hand_side)
+    Methods 
     -------
-    initialize(dx, dt = 0.1)
-        Computes the grid, the coefficients and check the stability condition.
-        \\If you call this method again (for instance to refine the grid), you
-        need to call again compute_boundary_conditions() and 
-        compute_right_hand_side()
-
-
     compute_boundary_conditions(boundary)
         Computes boundary conditions and initial condition
     compute_right_hand_side(rhs)
         Computes the right-hand side
-    solve()
-        Solves the PDE using a subRiemannian finite difference method   
+    return_solution
+        return the ndarry of the solution
     """
 
     def __init__(self, grid : tuple[float, float, float], 
@@ -108,22 +96,145 @@ class ExplicitSolver:
                                  "must be float or int.")
             if grid[i] < 0:
                 raise ValueError("Invalid grid value, lenght must be positive")
-        self.grid = grid
+        self._grid = grid
         self.coefficients = coefficients
-        self.stability_check = 0
-        self.T = None
+        self._stability_check = 0
         self.X = None
-        self.Y = None
-        self.a = None
-        self.b = None
-        self.c = None
-        self.Nt = None
-        self.Nx = None
-        self.Ny = None
-        self.solution = None
+        self._solution = None
         self.rhs = None
-        self.computed_solution = False
 
+    def _check_initialized(self) -> None:
+        """Check if the grid is set"""
+        if self.X is None:
+            raise RuntimeError("initialize() must be called first")
+
+    def compute_boundary_conditions(self, boundary: Boundary2D) -> None:
+        """
+        Computes boundary conditions and initial condition
+
+        Parameters        
+        ----------
+        boundary : Boundary2D
+            a tuple of five 2D functions or scalars:
+            - fx_left is the left boundary condition (x = -X)
+            - fx_right is the right boundary condition (x = X)
+            - fy_left is the bottom boundary condition (y = -Y)
+            - fy_right is the top boundary condition (y = Y)
+            - initial is the initial condition (t = 0)
+
+        Raises
+        ------
+        RuntimeError
+            -If the grid has not been computed
+        ValueError
+            -If the input dimensions are invalid
+            -If one of the boundary conditions is not a scalar or 
+             a function that can be evaluated
+        """
+        
+        self._check_initialized() 
+        if len(boundary) != 5:
+            raise ValueError("Invalid input dimensions.")
+        for i in range(5):
+            if not (np.isscalar(boundary[i]) or callable(boundary[i])):
+                raise ValueError("Invalid boundary condition provided. Each " \
+                          "boundary condition must be a scalar or a function.")
+        self._solution = np.zeros((self._Nt, self._Nx, self._Ny))
+        indices = [0, -1]
+        for idx, index in enumerate(indices):
+            fx = boundary[idx]
+            if np.isscalar(fx):
+                self._solution[:, index, :] = fx
+            else:
+                t_boundary = self.T[:, index, :]
+                y_boundary = self.Y[:, index, :]
+                self._solution[:, index, :] = fx(t_boundary, y_boundary)
+        fy_left = boundary[2]
+        if np.isscalar(fy_left):
+            self._solution[:, self._Lx:, 0] = fy_left
+        else:
+            t_boundary = self.T[:, self._Lx:, 0]
+            x_boundary = self.X[:, self._Lx:, 0]
+            self._solution[:, self._Lx:, 0] = fy_left(t_boundary, x_boundary)
+        fy_right = boundary[3]
+        if np.isscalar(fy_right):
+            self._solution[:, :self._Lx, -1] = fy_right
+        else:
+            t_boundary = self.T[:, :self._Lx, -1]
+            x_boundary = self.X[:, :self._Lx, -1]
+            self._solution[:, :self._Lx, -1] = fy_right(t_boundary, x_boundary)
+        if np.isscalar(boundary[4]):
+            self._solution[0, :, :] = boundary[4]
+        else:
+            x_initial = self.X[0, :, :]
+            y_initial = self.Y[0, :, :]
+            self._solution[0, :, :] = boundary[4](x_initial, y_initial)
+
+    def compute_right_hand_side(self, right_hand_side : Function3D) -> None:
+        """
+        Computes the right-hand side of the PDE 
+        
+        Parameters
+        ----------
+        right_hand_side : Function3D
+            a scalar or function representing the right-hand side of the PDE 
+        
+        Raises
+        ------
+        RuntimeError
+            -If the grid has not been computed
+        ValueError
+            -If the input is not a scalar or a function that can be evaluated
+        """
+
+        self._check_initialized() 
+        if np.isscalar(right_hand_side):
+            self.rhs = np.full((self._Nt, self._Nx, self._Ny), right_hand_side)
+        elif callable(right_hand_side):
+            self.rhs = right_hand_side(self.T, self.X, self.Y)
+        else:
+            raise ValueError("Right-hand side must be a scalar or a function.")
+        
+    def return_solution(self) -> np.typing.NDArray:
+        """Return the vector of the solution"""
+        return self._solution.copy()
+
+
+
+class ExplicitSolver(Solver):
+    """
+    Numerical solver for a 2D Kolmogorov PDE on an origin-centered 
+    rectangular domain using an explicit finite difference scheme.
+    ...
+
+    Attributes
+    ----------
+    T : final time of the domain
+    X : maximum lenght in the x variable
+    Y : maximum lenght in the y variable
+    coefficients : Coefficients3D
+        a sequence of three scalars or functions representing 
+        the coefficients of the PDE
+    rhs : Function3D
+        a scalar or function representing the right-hand side of the PDE
+
+    Methods (first call initialize to set the grid, and call solve only 
+             after compute_boundary_conditions and compute_right_hand_side)
+    -------
+    initialize(dx, dt = 0.1)
+        Computes the grid, the coefficients and check the stability condition.
+        \\If you call this method again (for instance to refine the grid), you
+        need to call again compute_boundary_conditions() and 
+        compute_right_hand_side()
+    compute_boundary_conditions(boundary)
+        Computes boundary conditions and initial condition
+    compute_right_hand_side(rhs)
+        Computes the right-hand side
+    solve()
+        Solves the PDE using a subRiemannian explicit finite difference method 
+    return_solution()
+        Returns the solution of the PDE  
+    """
 
     def initialize(self, dx: float, dt: float = 0.1) -> None:
         """
@@ -149,152 +260,57 @@ class ExplicitSolver:
         """
         if not isinstance(dx,(int, float)) or not isinstance(dt,(int, float)):
             raise TypeError("dx and dt must be numeric.")
-        if dx <= 0 or dx > self.grid[1] or dt <= 0 or dt > self.grid[0]:
+        if dx <= 0 or dx > self._grid[1] or dt <= 0 or dt > self._grid[0]:
             raise ValueError("dx and dt must be valid for the grid.")
-        self.dx = dx
-        self.dt = dt
-        t = self.grid[0]
-        self.T = np.arange(0, t + self.dt/2, self.dt)
-        self.Nt = len(self.T)
-        x = self.grid[1]
-        self.Lx = int(x / self.dx)
-        self.X, self.dx = np.linspace(-x, x, 2 * self.Lx + 1, 
+        self._dx = dx
+        self._dt = dt
+        t = self._grid[0]
+        self.T = np.arange(0, t + self._dt/2, self._dt)
+        self._Nt = len(self.T)
+        x = self._grid[1]
+        self._Lx = int(x / self._dx)
+        self.X, self._dx = np.linspace(-x, x, 2 * self._Lx + 1, 
                                       endpoint=True, retstep=True)
-        self.Nx = len(self.X)
+        self._Nx = len(self.X)
         # required by this particular finited difference method
-        self.dy = self.dx * self.dt     
-        y = self.grid[2]
-        self.Y = np.arange(-y, y + self.dy/2, self.dy)
-        self.Ny = len(self.Y)
+        self._dy = self._dx * self._dt     
+        y = self._grid[2]
+        self.Y = np.arange(-y, y + self._dy/2, self._dy)
+        self._Ny = len(self.Y)
         self.T, self.X, self.Y = np.meshgrid(self.T, self.X, 
                                              self.Y, indexing='ij')
-
         arrays = []
         for coeff in self.coefficients:
             if np.isscalar(coeff):
-                arrays.append(np.full((self.Nt, self.Nx, self.Ny), coeff))
+                arrays.append(np.full((self._Nt, self._Nx, self._Ny), coeff))
             else:
                 arrays.append(coeff(self.T,self.X,self.Y))
-        self.a, self.b, self.c = arrays
+        self._a, self._b, self._c = arrays
 
-        a_max = np.max(np.abs(self.a))
+        a_max = np.max(np.abs(self._a))
         if a_max <= 0:
             raise ValueError("The second order coefficient a(t, x, y) " \
                              "must be strictly positive.")
-        b_max = np.max(np.abs(self.b))
-        c_max = np.max(np.abs(self.c))
+        b_max = np.max(np.abs(self._b))
+        c_max = np.max(np.abs(self._c))
 
-        conditions = [self.dx**2 / (2 * a_max)]
+        conditions = [self._dx**2 / (2 * a_max)]
         if b_max > 0:
-            conditions.append(self.dx / b_max)
+            conditions.append(self._dx / b_max)
         if c_max > 0:
             conditions.append(2 / c_max)
         stability_condition = min(conditions)
         # Necessary recursion when dealing with non-constant coefficients, as 
         # the stability condition may change after adjusting the time step 
         # (hence the grid)
-        if (self.dt >= stability_condition):
-            if (self.stability_check < 5):
-                self.dt = stability_condition * 0.9
-                self.stability_check += 1
-                self.initialize(self.dx, self.dt)    
+        if (self._dt >= stability_condition):
+            if (self._stability_check < 5):
+                self._dt = stability_condition * 0.9
+                self._stability_check += 1
+                self.initialize(self._dx, self._dt)    
             else:
                 raise ValueError("Error in verifying stability condition. " \
                      "Please check the coefficients and verify the time step.")
-
-
-    def compute_boundary_conditions(self, boundary: Boundary2D) -> None:
-        """
-        Computes boundary conditions and initial condition
-
-        Parameters        
-        ----------
-        boundary : Boundary2D
-            a tuple of five 2D functions or scalars:
-            - fx_left is the left boundary condition (x = -X)
-            - fx_right is the right boundary condition (x = X)
-            - fy_left is the bottom boundary condition (y = -Y)
-            - fy_right is the top boundary condition (y = Y)
-            - initial is the initial condition (t = 0)
-
-        Raises
-        ------
-        RuntimeError
-            -If initialize() have not been called before
-        ValueError
-            -If the input dimensions are invalid
-            -If one of the boundary conditions is not a scalar or 
-             a function that can be evaluated
-        """
-        
-        if self.X is None:
-            raise RuntimeError("Initialize must be called before " \
-                               "computing boundary conditions.")
-        if len(boundary) != 5:
-            raise ValueError("Invalid input dimensions.")
-        for i in range(5):
-            if not (np.isscalar(boundary[i]) or callable(boundary[i])):
-                raise ValueError("Invalid boundary condition provided. Each " \
-                          "boundary condition must be a scalar or a function.")
-        self.solution = np.zeros((self.Nt, self.Nx, self.Ny))
-        indices = [0, -1]
-        for idx, index in enumerate(indices):
-            fx = boundary[idx]
-            if np.isscalar(fx):
-                self.solution[:, index, :] = fx
-            else:
-                t_boundary = self.T[:, index, :]
-                y_boundary = self.Y[:, index, :]
-                self.solution[:, index, :] = fx(t_boundary, y_boundary)
-        fy_left = boundary[2]
-        if np.isscalar(fy_left):
-            self.solution[:, self.Lx:, 0] = fy_left
-        else:
-            t_boundary = self.T[:, self.Lx:, 0]
-            x_boundary = self.X[:, self.Lx:, 0]
-            self.solution[:, self.Lx:, 0] = fy_left(t_boundary, x_boundary)
-        fy_right = boundary[3]
-        if np.isscalar(fy_right):
-            self.solution[:, :self.Lx, -1] = fy_right
-        else:
-            t_boundary = self.T[:, :self.Lx, -1]
-            x_boundary = self.X[:, :self.Lx, -1]
-            self.solution[:, :self.Lx, -1] = fy_right(t_boundary, x_boundary)
-        if np.isscalar(boundary[4]):
-            self.solution[0, :, :] = boundary[4]
-        else:
-            x_initial = self.X[0, :, :]
-            y_initial = self.Y[0, :, :]
-            self.solution[0, :, :] = boundary[4](x_initial, y_initial)
-
-
-    def compute_right_hand_side(self, right_hand_side : Function3D) -> None:
-        """
-        Computes the right-hand side of the PDE 
-        
-        Parameters
-        ----------
-        right_hand_side : Function3D
-            a scalar or function representing the right-hand side of the PDE 
-        
-        Raises
-        ------
-        RuntimeError
-            -If initialize() have not been called before
-        ValueError
-            -If the input is not a scalar or a function that can be evaluated
-        """
-
-        if self.X is None:
-            raise RuntimeError("Initialize must be called before " \
-                               "computing boundary conditions.")
-        if np.isscalar(right_hand_side):
-            self.rhs = np.full((self.Nt, self.Nx, self.Ny), right_hand_side)
-        elif callable(right_hand_side):
-            self.rhs = right_hand_side(self.T, self.X, self.Y)
-        else:
-            raise ValueError("Right-hand side must be a scalar or a function.")
-            
 
     def solve(self, verbose: bool = True) -> None:
         """ 
@@ -306,7 +322,6 @@ class ExplicitSolver:
         verbose: bool, optional
             Set to false if you don't want to print the simulation percentage
 
-
         Raises
         ------
         RuntimeError
@@ -315,39 +330,42 @@ class ExplicitSolver:
             -If the shapes of the solution and the right-hand side do not match
         """
 
-        if self.solution is None:
+        if self._solution is None:
             raise RuntimeError("Boundary conditions must be computed before.")
         if self.rhs is None:
             raise RuntimeError("Right-hand side must be computed before.")
-        if self.solution.shape != (self.Nt, self.Nx, self.Ny):
+        if self._solution.shape != (self._Nt, self._Nx, self._Ny):
             raise RuntimeError("Please compute again the boundary conditions.")
-        if self.rhs.shape != (self.Nt, self.Nx, self.Ny):
+        if self.rhs.shape != (self._Nt, self._Nx, self._Ny):
             raise RuntimeError("Please compute again the right-hand side.")
         if verbose:
             percentages = 0  
             print(f"Computing solution: {percentages}%", end="")
-        for n in range(self.Nt - 1):
-            for i in range(1, self.Nx - 1):
-                jmin = max(0, self.Lx - i) * (n + 1)
-                jmax = (self.Ny - 1) - max(0, i - self.Lx) * (n + 1)
+        for n in range(self._Nt - 1):
+            for i in range(1, self._Nx - 1):
+                jmin = max(0, self._Lx - i) * (n + 1)
+                jmax = (self._Ny - 1) - max(0, i - self._Lx) * (n + 1)
                 for j in range(jmin + 1, jmax + 1):
                     # The Lie derivative is approximated by using the following
                     #  index shift, which is linked to the characteristic flow
-                    Lie = i + j - self.Lx
-                    diffusion = (self.a[n, i, j] * 
-                                 sd(self.solution[n, :, Lie], self.dx, i))
-                    drift = (self.b[n, i, j] 
-                             * cd(self.solution[n, :, Lie], self.dx, i))
-                    reaction = (self.c[n, i, j] * self.solution[n, i, j])
-                    self.solution[n + 1, i, j] = (self.solution[n, i, Lie] +
-                                                 self.dt * (diffusion + drift +
-                                                 reaction - self.rhs[n, i, j]))
+                    Lie = i + j - self._Lx
+                    diffusion = (self._a[n, i, Lie] * 
+                                 sd(self._solution[n, :, Lie], self._dx, i))
+                    drift = (self._b[n, i, Lie] 
+                             * cd(self._solution[n, :, Lie], self._dx, i))
+                    reaction = (self._c[n, i, Lie] * self._solution[n, i, Lie])
+                    self._solution[n + 1, i, j] = (self._solution[n, i, Lie] +
+                                                 self._dt * (diffusion + drift +
+                                                 reaction - self.rhs[n, i, Lie]))
             if verbose:
-                if int((n + 1) / self.Nt * 100) > percentages:
-                    percentages = int((n + 1) / self.Nt * 100)
+                if int((n + 1) / self._Nt * 100) > percentages:
+                    percentages = int((n + 1) / self._Nt * 100)
                     print(f"\rComputing solution: {percentages}%", end="")
         if verbose:
             print("\r" + " " * 40, end="") 
-            print("\rSolution computed.")        
-        self.computed_solution = True
+            print("\rSolution computed.")     
         return 
+    
+    
+
+    #TODO fare implicit
