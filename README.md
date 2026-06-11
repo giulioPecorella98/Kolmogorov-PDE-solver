@@ -88,7 +88,8 @@ rhs = 0
 solver.compute_right_hand_side(rhs)
 
 # Solve the PDE
-solution = solver.solve().return_solution()
+solver.solve()
+solution = solver.return_solution()
 ```
 
 ## Package Structure
