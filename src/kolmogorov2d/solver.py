@@ -47,9 +47,9 @@ class Solver:
     grid : Sequence[float, float, float]
         a sequence of three floats T, X, Y representing 
         the domain (0, T) x (-X, X) x (-Y, Y)
-    T : final time of the domain
-    X : maximum lenght in the x variable
-    Y : maximum lenght in the y variable
+    T : meshgrid for the t variable
+    X : meshgrid for the x variable
+    Y : meshgrid the y variable
     coefficients : Coefficients3D
         a sequence of three scalars or functions representing 
         the coefficients of the PDE
@@ -99,13 +99,13 @@ class Solver:
         self._grid = grid
         self.coefficients = coefficients
         self._stability_check = 0
-        self.X = None
+        self._X = None
         self._solution = None
         self.rhs = None
 
     def _check_initialized(self) -> None:
         """Check if the grid is set"""
-        if self.X is None:
+        if self._X is None:
             raise RuntimeError("initialize() must be called first")
 
     def compute_boundary_conditions(self, boundary: Boundary2D) -> None:
@@ -146,28 +146,28 @@ class Solver:
             if np.isscalar(fx):
                 self._solution[:, index, :] = fx
             else:
-                t_boundary = self.T[:, index, :]
-                y_boundary = self.Y[:, index, :]
+                t_boundary = self._T[:, index, :]
+                y_boundary = self._Y[:, index, :]
                 self._solution[:, index, :] = fx(t_boundary, y_boundary)
         fy_left = boundary[2]
         if np.isscalar(fy_left):
             self._solution[:, self._Lx:, 0] = fy_left
         else:
-            t_boundary = self.T[:, self._Lx:, 0]
-            x_boundary = self.X[:, self._Lx:, 0]
+            t_boundary = self._T[:, self._Lx:, 0]
+            x_boundary = self._X[:, self._Lx:, 0]
             self._solution[:, self._Lx:, 0] = fy_left(t_boundary, x_boundary)
         fy_right = boundary[3]
         if np.isscalar(fy_right):
             self._solution[:, :self._Lx, -1] = fy_right
         else:
-            t_boundary = self.T[:, :self._Lx, -1]
-            x_boundary = self.X[:, :self._Lx, -1]
+            t_boundary = self._T[:, :self._Lx, -1]
+            x_boundary = self._X[:, :self._Lx, -1]
             self._solution[:, :self._Lx, -1] = fy_right(t_boundary, x_boundary)
         if np.isscalar(boundary[4]):
             self._solution[0, :, :] = boundary[4]
         else:
-            x_initial = self.X[0, :, :]
-            y_initial = self.Y[0, :, :]
+            x_initial = self._X[0, :, :]
+            y_initial = self._Y[0, :, :]
             self._solution[0, :, :] = boundary[4](x_initial, y_initial)
 
     def compute_right_hand_side(self, right_hand_side : Function3D) -> None:
@@ -191,13 +191,18 @@ class Solver:
         if np.isscalar(right_hand_side):
             self.rhs = np.full((self._Nt, self._Nx, self._Ny), right_hand_side)
         elif callable(right_hand_side):
-            self.rhs = right_hand_side(self.T, self.X, self.Y)
+            self.rhs = right_hand_side(self._T, self._X, self._Y)
         else:
             raise ValueError("Right-hand side must be a scalar or a function.")
         
     def return_solution(self) -> np.typing.NDArray:
         """Return the vector of the solution"""
         return self._solution.copy()
+    
+    def return_grid(self) -> tuple[np.typing.NDArray, np.typing.NDArray,
+                                   np.typing.NDArray]:
+        """Return the meshgrid T, X, Y"""
+        return self._T.copy(), self._X.copy(), self._Y.copy()
 
 
 
@@ -209,9 +214,6 @@ class ExplicitSolver(Solver):
 
     Attributes
     ----------
-    T : final time of the domain
-    X : maximum lenght in the x variable
-    Y : maximum lenght in the y variable
     coefficients : Coefficients3D
         a sequence of three scalars or functions representing 
         the coefficients of the PDE
@@ -234,6 +236,8 @@ class ExplicitSolver(Solver):
         Solves the PDE using a subRiemannian explicit finite difference method 
     return_solution()
         Returns the solution of the PDE  
+    return_meshgrid()
+        Returns the meshgrid for visualization pourpose
     """
 
     def initialize(self, dx: float, dt: float = 0.1) -> None:
@@ -265,26 +269,26 @@ class ExplicitSolver(Solver):
         self._dx = dx
         self._dt = dt
         t = self._grid[0]
-        self.T = np.arange(0, t + self._dt/2, self._dt)
-        self._Nt = len(self.T)
+        self._T = np.arange(0, t + self._dt/2, self._dt)
+        self._Nt = len(self._T)
         x = self._grid[1]
         self._Lx = int(x / self._dx)
-        self.X, self._dx = np.linspace(-x, x, 2 * self._Lx + 1, 
+        self._X, self._dx = np.linspace(-x, x, 2 * self._Lx + 1, 
                                       endpoint=True, retstep=True)
-        self._Nx = len(self.X)
+        self._Nx = len(self._X)
         # required by this particular finited difference method
         self._dy = self._dx * self._dt     
         y = self._grid[2]
-        self.Y = np.arange(-y, y + self._dy/2, self._dy)
-        self._Ny = len(self.Y)
-        self.T, self.X, self.Y = np.meshgrid(self.T, self.X, 
-                                             self.Y, indexing='ij')
+        self._Y = np.arange(-y, y + self._dy/2, self._dy)
+        self._Ny = len(self._Y)
+        self._T, self._X, self._Y = np.meshgrid(self._T, self._X, self._Y, 
+                                                indexing='ij')
         arrays = []
         for coeff in self.coefficients:
             if np.isscalar(coeff):
                 arrays.append(np.full((self._Nt, self._Nx, self._Ny), coeff))
             else:
-                arrays.append(coeff(self.T,self.X,self.Y))
+                arrays.append(coeff(self._T,self._X,self._Y))
         self._a, self._b, self._c = arrays
 
         a_max = np.max(np.abs(self._a))
@@ -368,4 +372,5 @@ class ExplicitSolver(Solver):
     
     
 
-    #TODO fare implicit
+    #TODO fare implicit e sistemare readme e altra roba
+    

@@ -12,6 +12,8 @@ if __name__ == "__main__":
     kolmogorov.compute_boundary_conditions(boundary)
     kolmogorov.compute_right_hand_side(right_hand_side)
     kolmogorov.solve()
-    plot_solution(kolmogorov.X, kolmogorov.Y, kolmogorov.T, kolmogorov.solution)
+    solution = kolmogorov.return_solution()
+    T, X, Y = kolmogorov.return_grid()
+    plot_solution(T, X, Y, solution)
     input("Test completed.")
 

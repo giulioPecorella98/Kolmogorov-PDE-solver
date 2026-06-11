@@ -3,8 +3,8 @@ import numpy as np
 from numpy.typing import NDArray
 from matplotlib.figure import Figure
 
-def plot_solution(X: NDArray[np.float64], Y: NDArray[np.float64],
-                  T: NDArray[np.float64], solution: NDArray[np.float64], 
+def plot_solution(T: NDArray[np.float64], X: NDArray[np.float64], 
+                  Y: NDArray[np.float64], solution: NDArray[np.float64], 
                   pause_time: float = 0.1, show: bool = True) -> Figure:        
     """
     Plots the solution at each time step.
