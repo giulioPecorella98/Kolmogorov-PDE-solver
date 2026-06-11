@@ -7,7 +7,7 @@ name = "kolmogorov2d"
 version = "1.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "numpy"
+    "numpy",
     "matplotlib"
 ]
 authors = [{name = "Giulio Pecorella", email = "giuliopecorella98@gmail.com"}]
