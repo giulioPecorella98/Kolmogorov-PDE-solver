@@ -93,7 +93,7 @@ solver.solve()
 solution = solver.return_solution()
 
 # Plot the solution
-T, X, Y = solution.return_grid()
+T, X, Y = solver.return_grid()
 plot_solution(T, X, T, solution)
 ```
 
