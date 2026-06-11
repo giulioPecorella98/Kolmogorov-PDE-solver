@@ -65,6 +65,7 @@ pip install -e .
 
 ```python
 from kolmogorov2d.solver import ExplicitSolver
+from kolmogorov2d.visualization import plot_solution
 import numpy as np
 
 # Define domain: (0, T) × (-X, X) × (-Y, Y)
@@ -90,6 +91,10 @@ solver.compute_right_hand_side(rhs)
 # Solve the PDE
 solver.solve()
 solution = solver.return_solution()
+
+# Plot the solution
+T, X, Y = solution.return_grid()
+plot_solution(T, X, T, solution)
 ```
 
 ## Package Structure

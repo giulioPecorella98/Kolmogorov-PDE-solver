@@ -8,6 +8,7 @@ version = "1.1.0"
 requires-python = ">=3.11"
 dependencies = [
     "numpy"
+    "matplotlib"
 ]
 authors = [{name = "Giulio Pecorella", email = "giuliopecorella98@gmail.com"}]
 maintainers = [{name = "Giulio Pecorella",email="giuliopecorella98@gmail.com"}]
@@ -20,9 +21,6 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python :: 3"
 ]
-
-[project.optional-dependencies]
-viz = ["matplotlib"]
 
 [project.urls]
 Repository = "https://github.com/giulioPecorella98/Kolmogorov-PDE-solver"
