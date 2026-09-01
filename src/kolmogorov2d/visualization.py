@@ -33,6 +33,7 @@ def plot_solution(T: NDArray[np.float64], X: NDArray[np.float64],
 
     if X.ndim != 3:
         raise ValueError("meshgrid arrays must be 3D.")
+        
     if not (solution.shape == T.shape == X.shape == Y.shape):
         raise ValueError("X, Y, T and solution must have the same shape.")
 

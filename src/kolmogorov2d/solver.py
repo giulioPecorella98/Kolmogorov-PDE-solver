@@ -65,7 +65,7 @@ class Solver:
     """
 
     def __init__(self, grid : tuple[float, float, float], 
-                 coefficients : Coefficients3D):
+                 coefficients : Coefficients3D) -> None:
         """
         Parameters
         ----------
@@ -84,18 +84,21 @@ class Solver:
             -If one of the grid values is not a float nor positive
         """
 
-        if (len(grid) != 3) or (len(coefficients) != 3):
+        if ((len(grid) != 3) or (len(coefficients) != 3)):
             raise ValueError("Invalid input dimensions.")
+        
         for i in range(3):
             if not (np.isscalar(coefficients[i]) or callable(coefficients[i])):
                 raise ValueError("Invalid coefficient provided. Coefficient "\
                                  "must be a scalar or a function.")
+        
         for i in range(3):
             if not (isinstance(grid[i], (int, float))):
                 raise ValueError("Invalid grid value provided. Grid value " \
                                  "must be float or int.")
             if grid[i] < 0:
                 raise ValueError("Invalid grid value, lenght must be positive")
+        
         self._grid = grid
         self.coefficients = coefficients
         self._stability_check = 0
@@ -133,12 +136,15 @@ class Solver:
         """
         
         self._check_initialized() 
+        
         if len(boundary) != 5:
             raise ValueError("Invalid input dimensions.")
+        
         for i in range(5):
             if not (np.isscalar(boundary[i]) or callable(boundary[i])):
                 raise ValueError("Invalid boundary condition provided. Each " \
                           "boundary condition must be a scalar or a function.")
+        
         self._solution = np.zeros((self._Nt, self._Nx, self._Ny))
         indices = [0, -1]
         for idx, index in enumerate(indices):
@@ -262,10 +268,13 @@ class ExplicitSolver(Solver):
             -If the time step is not small enough to satisfy the stability 
              conditions
         """
+        
         if not isinstance(dx,(int, float)) or not isinstance(dt,(int, float)):
             raise TypeError("dx and dt must be numeric.")
+        
         if dx <= 0 or dx > self._grid[1] or dt <= 0 or dt > self._grid[0]:
             raise ValueError("dx and dt must be valid for the grid.")
+        
         self._dx = dx
         self._dt = dt
         t = self._grid[0]
@@ -274,7 +283,7 @@ class ExplicitSolver(Solver):
         x = self._grid[1]
         self._Lx = int(x / self._dx)
         self._X, self._dx = np.linspace(-x, x, 2 * self._Lx + 1, 
-                                      endpoint=True, retstep=True)
+                                        endpoint=True, retstep=True)
         self._Nx = len(self._X)
         # required by this particular finited difference method
         self._dy = self._dx * self._dt     
@@ -306,7 +315,6 @@ class ExplicitSolver(Solver):
         stability_condition = min(conditions)
         # Necessary recursion when dealing with non-constant coefficients, as 
         # the stability condition may change after adjusting the time step 
-        # (hence the grid)
         if (self._dt >= stability_condition):
             if (self._stability_check < 5):
                 self._dt = stability_condition * 0.9
@@ -336,15 +344,20 @@ class ExplicitSolver(Solver):
 
         if self._solution is None:
             raise RuntimeError("Boundary conditions must be computed before.")
+        
         if self.rhs is None:
             raise RuntimeError("Right-hand side must be computed before.")
+        
         if self._solution.shape != (self._Nt, self._Nx, self._Ny):
             raise RuntimeError("Please compute again the boundary conditions.")
+        
         if self.rhs.shape != (self._Nt, self._Nx, self._Ny):
             raise RuntimeError("Please compute again the right-hand side.")
+        
         if verbose:
             percentages = 0  
             print(f"Computing solution: {percentages}%", end="")
+        
         for n in range(self._Nt - 1):
             for i in range(1, self._Nx - 1):
                 jmin = max(0, self._Lx - i) * (n + 1)
@@ -355,12 +368,12 @@ class ExplicitSolver(Solver):
                     Lie = i + j - self._Lx
                     diffusion = (self._a[n, i, Lie] * 
                                  sd(self._solution[n, :, Lie], self._dx, i))
-                    drift = (self._b[n, i, Lie] 
-                             * cd(self._solution[n, :, Lie], self._dx, i))
+                    drift = (self._b[n, i, Lie] *
+                             cd(self._solution[n, :, Lie], self._dx, i))
                     reaction = (self._c[n, i, Lie] * self._solution[n, i, Lie])
                     self._solution[n + 1, i, j] = (self._solution[n, i, Lie] +
-                                                 self._dt * (diffusion + drift +
-                                                 reaction - self.rhs[n, i, Lie]))
+                                               self._dt * (diffusion + drift +
+                                               reaction - self.rhs[n, i, Lie]))
             if verbose:
                 if int((n + 1) / self._Nt * 100) > percentages:
                     percentages = int((n + 1) / self._Nt * 100)
@@ -371,6 +384,6 @@ class ExplicitSolver(Solver):
         return 
     
     
-
-    #TODO fare implicit e sistemare readme e altra roba
-    
+#TODO
+class ImplicitSolver(Solver):
+    pass

@@ -3,7 +3,7 @@ from src.kolmogorov2d.visualization import plot_solution
 import numpy as np
 
 if __name__ == "__main__":
-    grid = (1, 50, 50)
+    grid = (1, 5, 5)
     boundary = (0, 0, 0, 0, lambda x, y: np.exp(-1 * (x**2 + y**2)))
     coefficients = (1, 0, 0)
     right_hand_side = 0
@@ -15,5 +15,4 @@ if __name__ == "__main__":
     solution = kolmogorov.return_solution()
     T, X, Y = kolmogorov.return_grid()
     plot_solution(T, X, Y, solution)
-    input("Example completed.")
-
+    input("Explicit completed.")
