@@ -31,8 +31,10 @@ from typing import TypeAlias, Callable
 Function3D: TypeAlias = float | Callable[[float, float, float], float]
 Coefficients3D: TypeAlias = tuple[Function3D, Function3D, Function3D]
 BoundaryFunction: TypeAlias = float | Callable[[float, float], float]
-Boundary2D: TypeAlias = tuple[BoundaryFunction, BoundaryFunction, 
-                        BoundaryFunction, BoundaryFunction, BoundaryFunction]
+Boundary2D: TypeAlias = tuple[
+    BoundaryFunction, BoundaryFunction, 
+    BoundaryFunction, BoundaryFunction, BoundaryFunction
+    ]
 
 
 
@@ -272,7 +274,7 @@ class ExplicitSolver(Solver):
         if not isinstance(dx,(int, float)) or not isinstance(dt,(int, float)):
             raise TypeError("dx and dt must be numeric.")
         
-        if dx <= 0 or dx > self._grid[1] or dt <= 0 or dt > self._grid[0]:
+        if (dx <= 0 or dx > self._grid[1] or dt <= 0 or dt > self._grid[0]):
             raise ValueError("dx and dt must be valid for the grid.")
         
         self._dx = dx
@@ -321,8 +323,10 @@ class ExplicitSolver(Solver):
                 self._stability_check += 1
                 self.initialize(self._dx, self._dt)    
             else:
-                raise ValueError("Error in verifying stability condition. " \
-                     "Please check the coefficients and verify the time step.")
+                raise ValueError(
+                    "Error in verifying stability condition. " / 
+                    "Please check the coefficients and verify the time step."
+                    )
 
     def solve(self, verbose: bool = True) -> None:
         """ 
@@ -366,14 +370,16 @@ class ExplicitSolver(Solver):
                     # The Lie derivative is approximated by using the following
                     #  index shift, which is linked to the characteristic flow
                     Lie = i + j - self._Lx
-                    diffusion = (self._a[n, i, Lie] * 
-                                 sd(self._solution[n, :, Lie], self._dx, i))
-                    drift = (self._b[n, i, Lie] *
-                             cd(self._solution[n, :, Lie], self._dx, i))
+                    diffusion = (self._a[n, i, Lie] 
+                                 * sd(self._solution[n, :, Lie], self._dx, i))
+                    drift = (self._b[n, i, Lie]
+                             * cd(self._solution[n, :, Lie], self._dx, i))
                     reaction = (self._c[n, i, Lie] * self._solution[n, i, Lie])
-                    self._solution[n + 1, i, j] = (self._solution[n, i, Lie] +
-                                               self._dt * (diffusion + drift +
-                                               reaction - self.rhs[n, i, Lie]))
+                    self._solution[n + 1, i, j] = (
+                        self._solution[n, i, Lie] 
+                        + self._dt * (diffusion + drift 
+                        + reaction - self.rhs[n, i, Lie])
+                        )
             if verbose:
                 if int((n + 1) / self._Nt * 100) > percentages:
                     percentages = int((n + 1) / self._Nt * 100)
